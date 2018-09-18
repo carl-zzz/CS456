@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+from socket import *
+import sys,os
+import struct
+import time
+
+if len(sys.argv) != 3:
+	print("Error Input")
+	quit()
+
+pl_size = 500;
+window_size_max = 10;
+tout = sys.argv[1]
+file_name = sys.argv[2]
+
+
+ss = socket(AF_INET, SOCK_DGRAM)
+tmp = open('channelInfo','rb')
+tmpw = tmp.read()
+tmpw = tmpw.split()
+serverName = tmpw[0]
+serverPort = int(tmpw[1])
+#print(serverName)
+#print(serverPort)
+tmp.close()
+addr = (serverName,serverPort)
+
+
+#rs = socket(AF_INET, SOCK_DGRAM)
+
+ss.settimeout(int(tout)/1000)
+
+s = 0;  #seq #
+f = open(file_name,'rb')
+
+bfr = []
+
+message = f.read(pl_size)
+while (message):
+	#########Packet Type########
+	pt = 0
+	pt = struct.pack("!I", pt)
+	#########Packet Length######
+	pl = pl_size + 12
+	pl = struct.pack("!I", pl)
+	#########Sequence Number####
+	sn = s
+	sn = struct.pack("!I", sn)
+
+	imessage = pt + pl + sn + message
+	bfr.append(imessage)
+	message = f.read(pl_size)
+	s = s + 1
+
+##########EOT##########
+pt = struct.pack("!I", 2)
+pl = struct.pack("!I", 12)
+sn = struct.pack("!I", s)
+message = pt + pl + sn
+bfr.append(message)
+f.close()
+#########END BUFFERING AND READY TO SEND!
+
+window_size = 0
+
+#flag list for checking ACKed
+flag = [1] * s
+base = 0
+mark = 0
+
+while (sum(flag) != 0):
+	if (base <= s) and (window_size < window_size_max):
+		ss.sendto(bfr[base],addr)
+		print("PKT SEND DAT 512 " + str(base))
+		base = base + 1
+		window_size = window_size + 1
+	try:
+		data,add = ss.recvfrom(512)
+		pt = struct.unpack("!I",data[0:4])
+		pl = struct.unpack("!I",data[4:8])
+		sn = struct.unpack("!I",data[8:12])
+		print("PKT RECV ACK 12 " + str(sn[0]))
+		flag[sn[0]] = 0
+		if (sn[0] == mark):
+			mark = mark + 1
+			window_size = window_size - 1
+	except timeout:
+		ss.sendto(bfr[base],addr)
+		print("PKT SEND DAT 512 " + str(base))
+
+ss.sendto(bfr[s],addr)
+print("PKT SEND EOT 12 " + str(s))
+while (True):
+	data,add = ss.recvfrom(512)
+	pt = struct.unpack("!I",data[0:4])
+	pl = struct.unpack("!I",data[4:8])
+	sn = struct.unpack("!I",data[8:12])
+	print("PKT RECV EOT 12 " + str(sn[0]))
+	if (pt[0] == 2):
+		break;
+ss.close()
+

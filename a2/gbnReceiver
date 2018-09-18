@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+from socket import *
+import sys,string
+import struct
+
+if len(sys.argv) != 2:
+	print('Bad Input!\n')
+	quit()
+port = 0
+
+rs = socket(AF_INET,SOCK_DGRAM)
+rs.bind(('',port))
+host = gethostname()
+port = rs.getsockname()[1]
+
+tmp = open("recvInfo","w+")
+strg = host + " " + str(port)
+tmp.write(strg)
+tmp.close()
+
+#ss = socket(AF_INET,SOCK_DGRAM)
+
+f = open(sys.argv[1],"wb")
+
+seq = 0
+
+while (True):
+	data,addr = rs.recvfrom(549)
+	pt = struct.unpack("!I",data[0:4])
+	pl = struct.unpack("!I",data[4:8])
+	sn = struct.unpack("!I",data[8:12])
+
+	if (pt[0] == 0) and (sn[0] == seq):
+		print("PKT RECV DAT 512 " + str(sn[0]))
+		f.write(data[12:])
+		pt = struct.pack("!I", 1)
+		pl = struct.pack("!I", 12)
+		sn = struct.pack("!I", seq)
+		message = pt + pl + sn
+		rs.sendto(message,addr)
+		print("PKT SEND ACK 12 " + str(seq))
+		f.write(data[12:])
+		seq = seq + 1
+	elif (pt[0] == 2) and (sn[0] == seq):
+		pt = struct.pack("!I", 2)
+		pl = struct.pack("!I", 12)
+		sn = struct.pack("!I", seq)
+		message = pt + pl + sn
+		rs.sendto(message,addr)
+		print("PKT SEND EOT 12 " + str(seq))
+		break
+	else:
+		print("PKT RECV DAT 512 " + str(sn[0]))
+f.close()
+rs.close()
+#ss.close()

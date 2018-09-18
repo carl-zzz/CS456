@@ -1,0 +1,39 @@
+CS456 A2
+
+Written with Python3. Test in ubuntu server.
+
+Finished all parts of assignment.(not sure)
+
+For Channel, I all choose ./channel 1 0 0 1 as sample
+
+GBN:
+	tried several timeout, if timeout short, getting more conjestion
+	sometime with large value, it gets inorder.
+		e.g.
+	@ubuntu1604-000% ./sender 8000 myfile
+	PKT SEND DAT 512 0
+	PKT SEND DAT 512 1
+	PKT SEND DAT 512 2
+	PKT SEND DAT 512 3
+	PKT SEND DAT 512 4
+	PKT SEND DAT 512 5
+	PKT SEND DAT 512 6
+	PKT SEND DAT 512 7
+	PKT SEND DAT 512 8
+	PKT SEND DAT 512 9
+	PKT RECV ACK 12 0
+	PKT SEND DAT 512 10
+	PKT RECV ACK 12 1
+	PKT SEND DAT 512 11
+	PKT RECV ACK 12 2
+	PKT SEND DAT 512 12
+	PKT RECV ACK 12 3
+	PKT SEND DAT 512 13
+	PKT RECV ACK 12 5   -----
+	PKT SEND DAT 512 14	|- Here.
+	PKT RECV ACK 12 4   -----
+	PKT SEND DAT 512 15
+	PKT RECV ACK 12 6
+
+SR:
+	haven't caught any crash. But this method need more space at the receiver end, although it is efficient

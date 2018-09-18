@@ -1,0 +1,38 @@
+from socket import *
+import sys,string
+
+port = 0
+
+s = socket(AF_INET,SOCK_DGRAM)
+s.bind(('',port))
+port = s.getsockname()[1]
+print(port)
+addr = ('',port)
+
+
+data,addr = s.recvfrom(65536)
+f = open(sys.argv[1],"wb")
+timeoutlimit = int(sys.argv[2])
+s.settimeout(timeoutlimit/1000)
+t=0
+size = int(data.decode("utf-8"))
+
+
+data,addr = s.recvfrom(65536)
+flag = int(data.decode("utf-8"))
+bsend = 0
+
+try:
+	while (bsend < size):
+		t = t+1
+		data,addr = s.recvfrom(65536)
+		f.write(data)
+		if flag == 0:
+			bsend = bsend + len(data)
+		else:
+			bsend = bsend + flag
+except timeout:
+	pass
+f.close()
+s.close()
+print(t," ",bsend)

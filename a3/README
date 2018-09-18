@@ -1,0 +1,17 @@
+CS456 A3
+(from Hanzhang Chen 20574275)
+
+Written with Python. Tested in ubuntu server.
+
+Finished all parts of assignment.
+
+For this assignment, I tried to use concurrent design instead of single-thread design which is a bit tough to write. SocketServer module is used in server. 
+
+## Server Design ##
+Basic idea for server is using handle class in socketserver to realize concurrency. A buffer is created which can contain one payload for each key.
+	- uploader should wait if there is still a value in the buffer dict with coresponding key
+	- downloader should wait if there is no value in the buffer dict with coresponding key
+After finishing uploading or downloading, key records will be cleaned in order to save space. 
+
+## Client Design ##
+Basic design for client, as in a1 and a2(just input has more cases, send the 9-byte controll msg first).

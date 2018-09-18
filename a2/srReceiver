@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+from socket import *
+import sys,string
+import struct
+import itertools
+
+if len(sys.argv) != 2:
+	print('Bad Input!\n')
+	quit()
+port = 0
+
+rs = socket(AF_INET,SOCK_DGRAM)
+rs.bind(('',port))
+host = gethostname()
+port = rs.getsockname()[1]
+
+tmp = open("recvInfo","w+")
+strg = host + " " + str(port)
+tmp.write(strg)
+tmp.close()
+
+#ss = socket(AF_INET,SOCK_DGRAM)
+
+f = open(sys.argv[1],"wb")
+
+seq = 0
+
+bfr = []
+
+while (True):
+	data,addr = rs.recvfrom(549)
+	pt = struct.unpack("!I",data[0:4])
+	pl = struct.unpack("!I",data[4:8])
+	sn = struct.unpack("!I",data[8:12])
+	if (pt[0] == 2):
+		pt = struct.pack("!I", 2)
+		pl = struct.pack("!I", 12)
+		sn = struct.pack("!I", seq)
+		message = pt + pl + sn
+		rs.sendto(message,addr)
+		print("PKT SEND EOT 12 " + str(seq))
+		break
+	print("PKT RECV DAT 512 " + str(sn[0]))
+	tmp = sn[0]
+	pt = struct.pack("!I", 1)
+	pl = struct.pack("!I", 12)
+	sn = struct.pack("!I", tmp)
+	message = pt + pl + sn
+	rs.sendto(message,addr)
+	print("PKT SEND ACK 12 " + str(tmp))
+	t = tmp - seq
+	while (t >= 0):
+		bfr.append([])
+		t = t - 1
+		seq = seq + 1
+	bfr[tmp] = data[12:]
+f.write(''.join(bfr))
+f.close()
+rs.close()

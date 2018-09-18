@@ -1,0 +1,50 @@
+CS456 A1
+
+Written with Python3. Test in ubuntu server.
+
+Finished all parts of assignment.
+
+Two versions written. One with send/connect, the other with sendto. 
+
+Sendto version has been preserved. 
+
+
+
+Experiment 1
+	- With sendto version, no package loss has been detected. 
+	- With send/connect version, package loss founded. 
+		-python3 receiver /dev/null 5000
+			31535
+			5046 645888
+		-python3 sender ubuntu1604-006 31535 128 1000000
+			7813 1000000
+		indicates loss.
+	conclusion:
+		with the same file size(large size), the smaller payload size is, the more loss packages have been found.
+
+Experiment 2
+	-terminated by timeout
+		python3 receiver /dev/null 5000
+			52784
+			56274 56274
+		python3 sender ubuntu1604-006 52784 1 1000000
+			1000000 1000000
+		time out. (with sendto version)
+	-terminated by ending
+		python3 receiver /dev/null 5000
+			48378
+			1 100
+		python3 sender ubuntu1604-006 48378 2048 testfile   // testfile contains 100 bytes
+			1 100
+		finishing safe and sound.
+
+Experiment 3
+	-using the example in assignment desciption.
+	-time ./sender ubuntu1604-006 57321 16 1000000
+	result:
+		62499 1000000
+
+		real 0m52.649s
+		user 0m1.040s
+		sys 0m1.572s
+	usertime and systime are just almost the same. 

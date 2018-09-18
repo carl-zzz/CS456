@@ -1,0 +1,48 @@
+from socket import *
+import sys,os
+
+if len(sys.argv) == 5:
+	serverName = sys.argv[1]
+	serverPort = int(sys.argv[2])
+	pl_size = int(sys.argv[3])
+	file_name = sys.argv[4]
+
+	addr = (serverName,serverPort)
+
+	sSocket = socket(AF_INET, SOCK_DGRAM)
+	s = -1
+	bsend = 0
+
+	if file_name.isdigit():
+		size = int(file_name)
+		message = file_name.encode("utf-8")
+		sSocket.sendto(message,addr)
+		message = str(pl_size).encode("utf-8")
+
+		while (size > 0):
+			sSocket.sendto(message,addr)
+			s = s+1
+			tmp = ''
+			message = tmp.encode("utf-8")
+			size = size - pl_size
+		sSocket.close()
+		print(s," ",file_name)
+	else:
+		f = open(file_name,'rb')
+		statinfo = os.stat(file_name)
+		message = bytes(str(statinfo.st_size),'utf-8')
+		sSocket.sendto(message,addr)
+		message = str(0).encode("utf-8")
+
+		while (message):
+			sSocket.sendto(message,addr)
+			s = s+1
+			message = f.read(pl_size)
+			bsend = bsend + len(message)
+		f.close()
+		sSocket.close()
+		print(s," ",bsend)
+
+else:
+	print("Error Input")
+	quit()

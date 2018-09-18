@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+import socket,sys
+import SocketServer
+import struct
+import threading
+import time
+class MyServer(SocketServer.BaseRequestHandler):
+	def handle(self):
+		s = self.request
+		self.data = s.recv(1024)
+		print(self.data)
+		# termination flag
+		self.flag = True
+		self.datastr = self.data.decode("utf-8")
+		self.op = self.datastr[0] 
+		self.key = self.datastr[1:9]
+		# termination msg received
+		if self.op == 'F':
+			self.flag = False
+		# download
+		elif self.op == 'G':
+			download_flag[self.key] = 1
+			while download_flag[self.key] == 1:
+				# if nothing in buffer, keep waiting
+				while (self.key not in file_queues) or (file_queues[self.key] == ''):
+					time.sleep(0.1)	
+				print(type(file_queues[self.key]))
+				s.send(''.join(file_queues[self.key]))
+				file_queues[self.key] = ''
+			file_queues.pop(self.key, None)
+			download_flag.pop(self.key, None)
+			print(file_queues)
+			print(download_flag)
+		# upload
+		elif self.op == 'P':
+			file_queues.setdefault(self.key,[])
+			while self.flag:
+				self.data = s.recv(1024)
+				print(type(self.data))
+				if not self.data:
+					download_flag[self.key] = 0
+					break
+				# if buffer hasn't been grabbed by downloader, keep waiting
+				while (file_queues[self.key] != ''):
+					time.sleep(0.1)
+				file_queues[self.key] = self.data
+			print(file_queues)
+			print(download_flag)
+
+if __name__ == "__main__":
+	# flags for all key, check whether upload is finished.
+	download_flag = {}
+	# buffer! One key have one pack slot.
+	file_queues = {}
+	# maybe no need for lock ...
+	#dflock = threading.Lock()
+	#fqlock = threading.Lock()
+	server = SocketServer.ThreadingTCPServer(('localhost',0),MyServer)
+	host, port = server.server_address
+	print(port)
+	# saving port
+	tmp = open("port","w+")
+	strg = str(port)
+	tmp.write(strg)
+	tmp.close()
+	server.serve_forever()
+
